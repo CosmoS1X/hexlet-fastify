@@ -1,8 +1,9 @@
 import build from '../src/index.js';
 
-const app = build();
-const port = 3000;
+const app = await build();
+const host = '0.0.0.0';
+const port = 8080;
 
-app.listen({ port }, () => {
-  console.log(`Example app listening on port ${port}`);
+app.listen({ host, port }, () => {
+  console.log(`App listening on ${host}:${port}`);
 });
