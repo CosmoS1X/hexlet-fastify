@@ -1,0 +1,16 @@
+extends ../layout/page.pug
+
+block content 
+  table.table.table-striped 
+    thead 
+      tr 
+        th Идентификатор пользователя
+        th Имя пользователя
+        th Email пользователя
+    tbody 
+      each user in users 
+        tr 
+          td
+            a(href=`/users/${user.userId}`) #{user.userId}
+          td #{user.username}
+          td #{user.email}
