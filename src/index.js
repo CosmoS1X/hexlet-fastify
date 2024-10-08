@@ -4,7 +4,8 @@ export default () => {
   const app = fastify();
 
   app.get('/', (req, res) => {
-    res.send('Hello World!');
+    res.type('text/html');
+    res.send('<h1>Fastify Example Page</h1>');
   });
 
   app.get('/users', (req, res) => {
@@ -13,6 +14,12 @@ export default () => {
 
   app.post('/users', (req, res) => {
     res.send('POST /users');
+  });
+
+  app.get('/hello', (req, res) => {
+    const { name } = req.query;
+    res.type('text/html');
+    res.send(`<h1>Hello, ${name ?? 'World'}!</h1>`);
   });
 
   return app;
