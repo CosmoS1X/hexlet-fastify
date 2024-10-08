@@ -12,6 +12,11 @@ export default () => {
     res.send('GET /users');
   });
 
+  app.get('/users/:userId/post/:postId', (req, res) => {
+    const { userId, postId } = req.params;
+    res.send(`User ID: ${userId}, post ID: ${postId}`);
+  });
+
   app.post('/users', (req, res) => {
     res.send('POST /users');
   });
