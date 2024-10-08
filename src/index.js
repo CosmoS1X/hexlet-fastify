@@ -1,20 +1,30 @@
 import fastify from 'fastify';
+import view from '@fastify/view';
+import pug from 'pug';
+import getUsers from './utils.js';
 
-export default () => {
+export default async () => {
   const app = fastify();
+  const users = getUsers();
+
+  await app.register(view, { engine: { pug } });
 
   app.get('/', (req, res) => {
-    res.type('text/html');
-    res.send('<h1>Fastify Example Page</h1>');
+    res.view('src/views/index');
   });
 
   app.get('/users', (req, res) => {
-    res.send('GET /users');
+    res.view('src/views/users/index', { users });
   });
 
-  app.get('/users/:userId/post/:postId', (req, res) => {
-    const { userId, postId } = req.params;
-    res.send(`User ID: ${userId}, post ID: ${postId}`);
+  app.get('/users/:userId', (req, res) => {
+    const user = users.find(({ userId }) => userId === req.params.userId);
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    return res.view('src/views/users/show', { user });
   });
 
   app.post('/users', (req, res) => {
