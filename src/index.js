@@ -1,13 +1,20 @@
 import fastify from 'fastify';
 import view from '@fastify/view';
+import formbody from '@fastify/formbody';
 import pug from 'pug';
-import getUsers from './utils.js';
+import { generateId, crypto } from './utils.js';
+
+const state = {
+  courses: [],
+  users: [],
+};
 
 export default async () => {
   const app = fastify();
-  const users = getUsers();
+  const { users } = state;
 
   await app.register(view, { engine: { pug } });
+  await app.register(formbody);
 
   app.get('/', (req, res) => {
     res.view('src/views/index');
@@ -25,6 +32,10 @@ export default async () => {
     return res.view('src/views/users/index', { users: currentUsers, term });
   });
 
+  app.get('/users/new', (req, res) => {
+    res.view('src/views/users/new');
+  });
+
   app.get('/users/:userId', (req, res) => {
     const user = users.find(({ userId }) => userId === req.params.userId);
 
@@ -36,7 +47,16 @@ export default async () => {
   });
 
   app.post('/users', (req, res) => {
-    res.send('POST /users');
+    const user = {
+      userId: generateId(),
+      username: req.body.username.trim(),
+      email: req.body.email.trim().toLowerCase(),
+      password: crypto(req.body.password),
+    };
+
+    state.users.push(user);
+
+    res.redirect('/users');
   });
 
   app.get('/hello', (req, res) => {
