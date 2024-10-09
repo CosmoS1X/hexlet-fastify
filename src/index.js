@@ -14,7 +14,15 @@ export default async () => {
   });
 
   app.get('/users', (req, res) => {
-    res.view('src/views/users/index', { users });
+    const { term } = req.query;
+    let currentUsers = users;
+
+    if (term) {
+      currentUsers = users.filter(({ username }) => username
+        .toLowerCase().includes(term.toLowerCase()));
+    }
+
+    return res.view('src/views/users/index', { users: currentUsers, term });
   });
 
   app.get('/users/:userId', (req, res) => {

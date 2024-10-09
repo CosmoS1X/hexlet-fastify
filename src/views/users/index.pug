@@ -1,6 +1,10 @@
 extends ../layout/page.pug
 
-block content 
+block content
+  form.input-group(action="/users" role="form" method="get")
+    input.form-control(type="search" name="term" value=term placeholder="Поиск по имени")
+    input.btn.btn-outline-primary(type="submit" value="Искать")
+
   table.table.table-striped 
     thead 
       tr 
