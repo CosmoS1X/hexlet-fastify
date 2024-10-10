@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import view from '@fastify/view';
 import formbody from '@fastify/formbody';
 import pug from 'pug';
+import yup from 'yup';
 import { generateId, crypto } from './utils.js';
 
 const state = {
@@ -46,12 +47,50 @@ export default async () => {
     return res.view('src/views/users/show', { user });
   });
 
-  app.post('/users', (req, res) => {
+  app.post('/users', {
+    attachValidation: true,
+    schema: {
+      body: yup.object({
+        username: yup.string().min(2, 'Имя должно быть не меньше двух символов'),
+        email: yup.string().email(),
+        password: yup.string().min(5, 'Пароль должен быть не меньше 5 символов'),
+        passwordConfirm: yup.string().min(5, 'Пароль должен быть не меньше 5 символов'),
+      }),
+    },
+    validatorCompiler: ({ schema }) => (data) => {
+      if (data.password !== data.passwordConfirm) {
+        return { error: Error('Пароли не совпадают') };
+      }
+
+      try {
+        return { value: schema.validateSync(data) };
+      } catch (error) {
+        return { error };
+      }
+    },
+  }, (req, res) => {
+    const {
+      username, email, password, passwordConfirm,
+    } = req.body;
+
+    if (req.validationError) {
+      const data = {
+        username,
+        email,
+        password,
+        passwordConfirm,
+        error: req.validationError,
+      };
+
+      res.view('src/views/users/new', data);
+      return;
+    }
+
     const user = {
       userId: generateId(),
-      username: req.body.username.trim(),
-      email: req.body.email.trim().toLowerCase(),
-      password: crypto(req.body.password),
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      password: crypto(password),
     };
 
     state.users.push(user);
