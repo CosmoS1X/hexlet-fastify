@@ -3,6 +3,8 @@ import view from '@fastify/view';
 import formbody from '@fastify/formbody';
 import pug from 'pug';
 import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
+import middie from '@fastify/middie';
+import morgan from 'morgan';
 import addRoutes from './routes/index.js';
 
 export default async () => {
@@ -21,6 +23,11 @@ export default async () => {
   });
 
   await app.register(formbody);
+  await app.register(middie);
+
+  const logger = morgan('tiny');
+
+  app.use(logger);
 
   app.get('/', (req, res) => {
     res.view('index');
