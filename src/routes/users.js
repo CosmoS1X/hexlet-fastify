@@ -5,7 +5,7 @@ export default (app) => {
   const users = [];
 
   app.get('/users/new', { name: 'newUser' }, (req, res) => {
-    res.view('src/views/users/new');
+    res.view('users/new');
   });
 
   app.get('/users', { name: 'users' }, (req, res) => {
@@ -17,7 +17,7 @@ export default (app) => {
         .toLowerCase().includes(term.toLowerCase()));
     }
 
-    return res.view('src/views/users/index', { users: currentUsers, term });
+    return res.view('users/index', { users: currentUsers, term });
   });
 
   app.get('/users/:id', { name: 'user' }, (req, res) => {
@@ -27,7 +27,7 @@ export default (app) => {
       return res.status(404).send('User not found');
     }
 
-    return res.view('src/views/users/show', { user });
+    return res.view('users/show', { user });
   });
 
   app.post('/users', {
@@ -65,7 +65,7 @@ export default (app) => {
         error: req.validationError,
       };
 
-      res.view('src/views/users/new', data);
+      res.view('users/new', data);
       return;
     }
 
@@ -79,5 +79,53 @@ export default (app) => {
     users.push(user);
 
     res.redirect(app.reverse('user', { id: user.id }));
+  });
+
+  app.get('/users/:id/edit', (req, res) => {
+    const user = users.find(({ id }) => id === req.params.id);
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    return res.view('/users/edit', { id: user.id, username: user.username, email: user.email });
+  });
+
+  app.post('/users/:id', {
+    attachValidation: true,
+    schema: {
+      body: yup.object({
+        username: yup.string().min(2, 'Имя должно быть не менее 2 символов'),
+        email: yup.string().email(),
+      }),
+    },
+    validatorCompiler: ({ schema }) => (data) => {
+      try {
+        return { value: schema.validateSync(data) };
+      } catch (error) {
+        return { error };
+      }
+    },
+  }, (req, res) => {
+    const { id } = req.params;
+    const { username, email } = req.body;
+
+    if (req.validationError) {
+      const data = {
+        id,
+        username,
+        email,
+        error: req.validationError,
+      };
+
+      res.view('/users/edit', data);
+      return;
+    }
+
+    const userIndex = users.findIndex((item) => item.id === id);
+
+    users[userIndex] = { ...users[userIndex], username, email };
+
+    res.redirect(app.reverse('user', { id }));
   });
 };

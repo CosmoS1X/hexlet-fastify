@@ -14,6 +14,7 @@ export default async () => {
 
   await app.register(view, {
     engine: { pug },
+    root: 'src/views',
     defaultContext: {
       route,
     },
@@ -22,7 +23,7 @@ export default async () => {
   await app.register(formbody);
 
   app.get('/', (req, res) => {
-    res.view('src/views/index');
+    res.view('index');
   });
 
   app.get('/hello', (req, res) => {

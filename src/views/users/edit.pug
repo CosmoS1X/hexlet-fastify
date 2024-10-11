@@ -1,0 +1,14 @@
+extends ../layout/page.pug
+
+block content 
+  if error 
+    p.text-danger #{error.message}
+
+  form(action=`/users/${id}` method="post") 
+    div.mb-3
+      label.form-label Имя:
+        input.form-control(type="text" name="username" value=username required) 
+    div.mb-3
+      label.form-label Email:
+        input.form-control(type="email" name="email" value=email required) 
+    input.btn.btn-primary(type="submit" value="Сохранить")
