@@ -2,3 +2,5 @@ extends layout/page.pug
 
 block content
   h1.text-center Welcome to Hexlet
+  if !visited
+    p.text-center.text-primary Это сообщение показывается только один раз. Если вы хотите увидеть его снова, сотрите куки

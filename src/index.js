@@ -5,12 +5,16 @@ import pug from 'pug';
 import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
 import middie from '@fastify/middie';
 import morgan from 'morgan';
+import fastifyCookie from '@fastify/cookie';
 import addRoutes from './routes/index.js';
 
 export default async () => {
   const app = fastify({ exposeHeadRoutes: false });
 
   await app.register(fastifyReverseRoutes);
+  await app.register(formbody);
+  await app.register(middie);
+  await app.register(fastifyCookie);
 
   const route = (name, placeholdersValues) => app.reverse(name, placeholdersValues);
 
@@ -22,22 +26,9 @@ export default async () => {
     },
   });
 
-  await app.register(formbody);
-  await app.register(middie);
-
   const logger = morgan('tiny');
 
   app.use(logger);
-
-  app.get('/', (req, res) => {
-    res.view('index');
-  });
-
-  app.get('/hello', (req, res) => {
-    const { name } = req.query;
-    res.type('text/html');
-    res.send(`<h1>Hello, ${name ?? 'World'}!</h1>`);
-  });
 
   addRoutes(app);
 
