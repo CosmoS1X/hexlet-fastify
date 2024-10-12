@@ -5,7 +5,8 @@ import pug from 'pug';
 import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
 import middie from '@fastify/middie';
 import morgan from 'morgan';
-import fastifyCookie from '@fastify/cookie';
+import session from '@fastify/session';
+import cookie from '@fastify/cookie';
 import addRoutes from './routes/index.js';
 
 export default async () => {
@@ -14,7 +15,11 @@ export default async () => {
   await app.register(fastifyReverseRoutes);
   await app.register(formbody);
   await app.register(middie);
-  await app.register(fastifyCookie);
+  await app.register(cookie);
+  await app.register(session, {
+    secret: 'a secret with minimum length of 32 characters',
+    cookie: { secure: false },
+  });
 
   const route = (name, placeholdersValues) => app.reverse(name, placeholdersValues);
 
@@ -30,7 +35,11 @@ export default async () => {
 
   app.use(logger);
 
-  addRoutes(app);
+  const state = {
+    users: [],
+  };
+
+  addRoutes(app, state);
 
   return app;
 };

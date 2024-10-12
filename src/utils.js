@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import CryptoJS from 'crypto-js';
 
-export const crypto = (password) => CryptoJS.SHA256(password);
+export const crypto = (password) => CryptoJS.SHA256(password).toString();
 
 export const generateId = () => faker.string.uuid();
 

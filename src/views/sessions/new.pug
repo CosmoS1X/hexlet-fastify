@@ -1,0 +1,13 @@
+extends ../layout/page.pug
+
+block content
+  if message
+    p.text-danger #{message}
+  form(action="/sessions", method="post")
+    div.mb-3
+      label.form-label Имя пользователя:
+        input.form-control(type="text", name="username" required)
+    div.mb-3
+      label.form-label Пароль:
+        input.form-control(type="password", name="password" required)
+    input.btn.btn-primary(type="submit", value="Войти")

@@ -1,11 +1,12 @@
 export default (app) => {
   app.get('/', (req, res) => {
     const { visited } = req.cookies;
-    const templateData = { visited };
+    const { username } = req.session;
+    const data = { visited, username };
 
     res.cookie('visited', true);
 
-    res.view('index', templateData);
+    res.view('index', data);
   });
 
   app.get('/hello', (req, res) => {

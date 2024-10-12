@@ -1,12 +1,9 @@
 import yup from 'yup';
 import { generateId, crypto } from '../utils.js';
 
-export default (app) => {
-  const users = [];
-
-  app.get('/users/new', { name: 'newUser' }, (req, res) => {
-    res.view('users/new');
-  });
+export default (app, state) => {
+  const { users } = state;
+  app.get('/users/new', { name: 'newUser' }, (req, res) => res.view('users/new'));
 
   app.get('/users', { name: 'users' }, (req, res) => {
     const { term } = req.query;

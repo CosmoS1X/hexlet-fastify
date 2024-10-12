@@ -1,6 +1,14 @@
 extends layout/page.pug
 
 block content
-  h1.text-center Welcome to Hexlet
   if !visited
     p.text-center.text-primary Это сообщение показывается только один раз. Если вы хотите увидеть его снова, сотрите куки
+
+  if username
+    h1.text-center Добро пожаловать, #{username}
+    form(action="/sessions/delete", method="post")
+      input.btn.btn-primary(type="submit", value="Выйти")
+
+  else
+    h1.mb-3.text-center Добро пожаловать, гость
+    a.btn.btn-primary(href="/sessions/new") Войти
