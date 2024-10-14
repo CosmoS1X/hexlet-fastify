@@ -14,7 +14,13 @@ export default (app, state) => {
         .toLowerCase().includes(term.toLowerCase()));
     }
 
-    return res.view('users/index', { users: currentUsers, term });
+    const data = {
+      users: currentUsers,
+      term,
+      flash: res.flash(),
+    };
+
+    return res.view('users/index', data);
   });
 
   app.get('/users/:id', { name: 'user' }, (req, res) => {
@@ -24,7 +30,7 @@ export default (app, state) => {
       return res.status(404).send('User not found');
     }
 
-    return res.view('users/show', { user });
+    return res.view('users/show', { user, flash: res.flash() });
   });
 
   app.post('/users', {
@@ -62,6 +68,7 @@ export default (app, state) => {
         error: req.validationError,
       };
 
+      req.flash('warning', 'Ошибка при регистрации пользователя');
       res.view('users/new', data);
       return;
     }
@@ -75,6 +82,7 @@ export default (app, state) => {
 
     users.push(user);
 
+    req.flash('success', 'Пользователь успешно зарегистрирован');
     res.redirect(app.reverse('user', { id: user.id }));
   });
 
@@ -123,6 +131,7 @@ export default (app, state) => {
 
     users[userIndex] = { ...users[userIndex], username, email };
 
+    req.flash('success', 'Данные успешно обновлены');
     res.redirect(app.reverse('user', { id }));
   });
 };

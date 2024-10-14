@@ -7,6 +7,7 @@ import middie from '@fastify/middie';
 import morgan from 'morgan';
 import session from '@fastify/session';
 import cookie from '@fastify/cookie';
+import flash from '@fastify/flash';
 import addRoutes from './routes/index.js';
 
 export default async () => {
@@ -20,6 +21,7 @@ export default async () => {
     secret: 'a secret with minimum length of 32 characters',
     cookie: { secure: false },
   });
+  await app.register(flash);
 
   const route = (name, placeholdersValues) => app.reverse(name, placeholdersValues);
 
