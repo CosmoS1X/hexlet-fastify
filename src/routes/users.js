@@ -68,7 +68,6 @@ export default (app, state) => {
         error: req.validationError,
       };
 
-      req.flash('warning', 'Ошибка при регистрации пользователя');
       res.view('users/new', data);
       return;
     }

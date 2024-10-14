@@ -2,7 +2,8 @@ extends ../layout/page.pug
 
 block content 
   if error 
-    p.text-danger #{error.message}
+    div.alert.alert-danger(role="alert")
+      p.mb-0.text-center #{error.message}
 
   form(action=`/users/${id}` method="post") 
     div.mb-3
