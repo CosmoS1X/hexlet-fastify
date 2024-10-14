@@ -37,6 +37,19 @@ export default async () => {
 
   app.use(logger);
 
+  app.addHook('onReady', () => {
+    console.log('Application is ready');
+  });
+
+  app.addHook('onError', (error) => {
+    console.error('Error during hook execution:', error.message);
+  });
+
+  app.addHook('onRequest', (req, res, done) => {
+    console.log(`Запрос выполнен в ${new Date()}`);
+    done();
+  });
+
   const state = {
     users: [],
   };
