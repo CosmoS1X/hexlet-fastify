@@ -150,6 +150,7 @@ export default (app, db) => {
         return;
       }
 
+      req.flash('success', 'Данные успешно обновлены');
       res.redirect('/users');
     });
   });
@@ -162,6 +163,7 @@ export default (app, db) => {
         return;
       }
 
+      req.flash('success', 'Пользователь успешно удален');
       res.redirect('/users');
     });
   });
