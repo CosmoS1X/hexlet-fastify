@@ -4,4 +4,4 @@ import sessions from './sessions.js';
 
 const controllers = [root, users, sessions];
 
-export default (app, state) => controllers.forEach((f) => f(app, state));
+export default (app, db) => controllers.forEach((f) => f(app, db));

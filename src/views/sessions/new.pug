@@ -2,7 +2,8 @@ extends ../layout/page.pug
 
 block content
   if message
-    p.text-danger #{message}
+    div.alert.alert-danger(role="alert")
+      p.mb-0.text-center #{message}
   form(action="/sessions", method="post")
     div.mb-3
       label.form-label Имя пользователя:

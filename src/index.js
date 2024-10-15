@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import wrapFastify from 'fastify-method-override-wrapper';
 import view from '@fastify/view';
 import formbody from '@fastify/formbody';
 import pug from 'pug';
@@ -8,10 +9,16 @@ import morgan from 'morgan';
 import session from '@fastify/session';
 import cookie from '@fastify/cookie';
 import flash from '@fastify/flash';
+import sqlite3 from 'sqlite3';
 import addRoutes from './routes/index.js';
+import prepareDatabase from './dbInit.js';
 
 export default async () => {
-  const app = fastify({ exposeHeadRoutes: false });
+  const wrappedFastify = wrapFastify(fastify);
+  const app = wrappedFastify({ exposeHeadRoutes: false });
+  const db = new sqlite3.Database(':memory:');
+
+  prepareDatabase(db);
 
   await app.register(fastifyReverseRoutes);
   await app.register(formbody);
@@ -50,11 +57,7 @@ export default async () => {
     done();
   });
 
-  const state = {
-    users: [],
-  };
-
-  addRoutes(app, state);
+  addRoutes(app, db);
 
   return app;
 };

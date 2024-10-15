@@ -6,3 +6,5 @@ block content
     div.text-center #{user.email}
   p.text-center
     a(href=`/users/${user.id}/edit`) Редактировать
+  form(action=`/users/${user.id}?_method=DELETE` method="post")
+    input.btn.btn-danger(type="submit" value="Удалить")

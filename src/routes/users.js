@@ -1,36 +1,47 @@
 import yup from 'yup';
-import { generateId, crypto } from '../utils.js';
+import { crypto } from '../utils.js';
 
-export default (app, state) => {
-  const { users } = state;
+export default (app, db) => {
   app.get('/users/new', { name: 'newUser' }, (req, res) => res.view('users/new'));
 
   app.get('/users', { name: 'users' }, (req, res) => {
-    const { term } = req.query;
-    let currentUsers = users;
+    db.all('SELECT * FROM users', (error, users) => {
+      const { term } = req.query;
+      let currentUsers = users;
 
-    if (term) {
-      currentUsers = users.filter(({ username }) => username
-        .toLowerCase().includes(term.toLowerCase()));
-    }
+      if (term) {
+        currentUsers = users.filter(({ username }) => username
+          .toLowerCase().includes(term.toLowerCase()));
+      }
 
-    const data = {
-      users: currentUsers,
-      term,
-      flash: res.flash(),
-    };
+      const data = {
+        users: currentUsers || [],
+        term,
+        flash: res.flash(),
+        error,
+      };
 
-    return res.view('users/index', data);
+      return res.view('users/index', data);
+    });
   });
 
   app.get('/users/:id', { name: 'user' }, (req, res) => {
-    const user = users.find(({ id }) => id === req.params.id);
+    db.get(`SELECT * FROM users WHERE id = ${req.params.id}`, (error, user) => {
+      if (error) {
+        return res.status(500).send(new Error(error));
+      }
 
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
 
-    return res.view('users/show', { user, flash: res.flash() });
+      const data = {
+        user,
+        flash: res.flash(),
+      };
+
+      return res.view('users/show', data);
+    });
   });
 
   app.post('/users', {
@@ -73,29 +84,35 @@ export default (app, state) => {
     }
 
     const user = {
-      id: generateId(),
       username: username.trim(),
       email: email.trim().toLowerCase(),
       password: crypto(password),
+      createdAt: new Date().toISOString(),
     };
 
-    users.push(user);
+    const stmt = db.prepare('INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)');
+    stmt.run([user.username, user.email, user.password, user.createdAt], function (error) {
+      if (error) {
+        res.send(error);
+        return;
+      }
 
-    req.flash('success', 'Пользователь успешно зарегистрирован');
-    res.redirect(app.reverse('user', { id: user.id }));
+      req.flash('success', 'Пользователь успешно зарегистрирован');
+      res.redirect(app.reverse('user', { id: this.lastID }));
+    });
   });
 
   app.get('/users/:id/edit', (req, res) => {
-    const user = users.find(({ id }) => id === req.params.id);
+    db.get(`SELECT * FROM users WHERE id = ${req.params.id}`, (error, user) => {
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
 
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
-
-    return res.view('/users/edit', { id: user.id, username: user.username, email: user.email });
+      return res.view('/users/edit', { id: user.id, username: user.username, email: user.email });
+    });
   });
 
-  app.post('/users/:id', {
+  app.patch('/users/:id', {
     attachValidation: true,
     schema: {
       body: yup.object({
@@ -114,23 +131,38 @@ export default (app, state) => {
     const { id } = req.params;
     const { username, email } = req.body;
 
-    if (req.validationError) {
-      const data = {
-        id,
-        username,
-        email,
-        error: req.validationError,
-      };
+    const stmt = db.prepare('UPDATE users SET username = ?, email = ? WHERE id = ?');
+    stmt.run([username, email, id], (error) => {
+      if (error) {
+        res.send(error);
+        return;
+      }
 
-      res.view('/users/edit', data);
-      return;
-    }
+      if (req.validationError) {
+        const data = {
+          id,
+          username,
+          email,
+          error: req.validationError,
+        };
 
-    const userIndex = users.findIndex((item) => item.id === id);
+        res.view('/users/edit', data);
+        return;
+      }
 
-    users[userIndex] = { ...users[userIndex], username, email };
+      res.redirect('/users');
+    });
+  });
 
-    req.flash('success', 'Данные успешно обновлены');
-    res.redirect(app.reverse('user', { id }));
+  app.delete('/users/:id', (req, res) => {
+    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
+    stmt.run(req.params.id, (error) => {
+      if (error) {
+        res.send(error);
+        return;
+      }
+
+      res.redirect('/users');
+    });
   });
 };

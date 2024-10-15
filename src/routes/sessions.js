@@ -1,22 +1,27 @@
 import { crypto } from '../utils.js';
 
-export default (app, state) => {
-  const { users } = state;
+export default (app, db) => {
   app.get('/sessions/new', (req, res) => res.view('sessions/new'));
 
   app.post('/sessions', (req, res) => {
-    const user = users.find(({ username, password }) => (
-      username === req.body.username && password === crypto(req.body.password)
-    ));
+    const { username, password } = req.body;
 
-    if (!user) {
-      res.view('sessions/new', { message: 'Неправильные имя и/или пароль' });
-      return;
-    }
+    db.get(`SELECT * FROM users WHERE username = '${username}'`, (error, user) => {
+      if (error) {
+        res.status(500);
+        res.send(error);
+        return;
+      }
 
-    req.session.username = user.username;
+      if (!user || user.password !== crypto(password)) {
+        res.view('sessions/new', { message: 'Неправильные имя и/или пароль' });
+        return;
+      }
 
-    res.redirect('/');
+      req.session.username = user.username;
+
+      res.redirect('/');
+    });
   });
 
   app.post('/sessions/delete', (req, res) => {
