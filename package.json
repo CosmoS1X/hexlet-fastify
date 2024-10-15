@@ -27,9 +27,11 @@
     "@fastify/view": "^10.0.1",
     "crypto-js": "^4.2.0",
     "fastify": "^5.0.0",
+    "fastify-method-override-wrapper": "^1.0.6",
     "fastify-reverse-routes": "^3.0.0",
     "morgan": "^1.10.0",
     "pug": "^3.0.3",
+    "sqlite3": "^5.1.7",
     "yup": "^1.4.0"
   },
   "devDependencies": {
