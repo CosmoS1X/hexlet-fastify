@@ -30,8 +30,8 @@
     "fastify-method-override-wrapper": "^1.0.6",
     "fastify-reverse-routes": "^3.0.0",
     "morgan": "^1.10.0",
+    "postgres": "^3.4.4",
     "pug": "^3.0.3",
-    "sqlite3": "^5.1.7",
     "yup": "^1.4.0"
   },
   "devDependencies": {
