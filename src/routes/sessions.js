@@ -1,37 +1,30 @@
 import { crypto } from '../utils.js';
+import sql from '../db.js';
 
-export default (app, db) => {
+export default (app) => {
   app.get('/sessions/new', (req, res) => res.view('sessions/new'));
 
-  app.post('/sessions', (req, res) => {
+  app.post('/sessions', async (req, res) => {
     const { username, password } = req.body;
 
-    db.get(`SELECT * FROM users WHERE username = '${username}'`, (error, user) => {
-      if (error) {
-        res.status(500);
-        res.send(error);
-        return;
-      }
+    const [user] = await sql`SELECT * FROM users WHERE username = ${username}`;
 
-      if (!user || user.password !== crypto(password)) {
-        res.view('sessions/new', { message: 'Неправильные имя и/или пароль' });
-        return;
-      }
+    if (!user || user.password !== crypto(password)) {
+      return res.view('sessions/new', { message: 'Неправильные имя и/или пароль' });
+    }
 
-      req.session.username = user.username;
+    req.session.username = user.username;
 
-      res.redirect('/');
-    });
+    return res.redirect('/');
   });
 
   app.post('/sessions/delete', (req, res) => {
     req.session.destroy((error) => {
       if (error) {
-        res.status(500);
-        res.send('Internal Server Error');
-      } else {
-        res.redirect('/');
+        return res.status(500).send('Internal Server Error');
       }
+
+      return res.redirect('/');
     });
   });
 };

@@ -1,47 +1,42 @@
 import yup from 'yup';
 import { crypto } from '../utils.js';
+import sql from '../db.js';
 
-export default (app, db) => {
+export default (app) => {
   app.get('/users/new', { name: 'newUser' }, (req, res) => res.view('users/new'));
 
-  app.get('/users', { name: 'users' }, (req, res) => {
-    db.all('SELECT * FROM users', (error, users) => {
-      const { term } = req.query;
-      let currentUsers = users;
+  app.get('/users', { name: 'users' }, async (req, res) => {
+    const users = await sql`SELECT * FROM users`;
+    const { term } = req.query;
+    let currentUsers = users;
 
-      if (term) {
-        currentUsers = users.filter(({ username }) => username
-          .toLowerCase().includes(term.toLowerCase()));
-      }
+    if (term) {
+      currentUsers = users.filter(({ username }) => username
+        .toLowerCase().includes(term.toLowerCase()));
+    }
 
-      const data = {
-        users: currentUsers || [],
-        term,
-        flash: res.flash(),
-        error,
-      };
+    const data = {
+      users: currentUsers || [],
+      term,
+      flash: res.flash(),
+    };
 
-      return res.view('users/index', data);
-    });
+    return res.view('users/index', data);
   });
 
-  app.get('/users/:id', { name: 'user' }, (req, res) => {
-    db.get(`SELECT * FROM users WHERE id = ${req.params.id}`, (error, user) => {
-      if (error) {
-        return res.status(500).send(new Error(error));
-      }
+  app.get('/users/:id', { name: 'user' }, async (req, res) => {
+    const [user] = await sql`SELECT * FROM users WHERE id = ${req.params.id}`;
 
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
 
-      const data = {
-        user,
-        flash: res.flash(),
-      };
+    const data = {
+      user,
+      flash: res.flash(),
+    };
 
-      return res.view('users/show', data);
-    });
+    return res.view('users/show', data);
   });
 
   app.post('/users', {
@@ -65,7 +60,7 @@ export default (app, db) => {
         return { error };
       }
     },
-  }, (req, res) => {
+  }, async (req, res) => {
     const {
       username, email, password, passwordConfirm,
     } = req.body;
@@ -79,37 +74,28 @@ export default (app, db) => {
         error: req.validationError,
       };
 
-      res.view('users/new', data);
-      return;
+      return res.view('users/new', data);
     }
 
-    const user = {
-      username: username.trim(),
-      email: email.trim().toLowerCase(),
-      password: crypto(password),
-      createdAt: new Date().toISOString(),
-    };
+    const [{ id }] = await sql`
+      INSERT INTO users
+      (username, email, password, created_at)
+      VALUES (${username.trim()}, ${email.trim().toLowerCase()}, ${crypto(password)}, NOW())
+      RETURNING id
+    `;
 
-    const stmt = db.prepare('INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)');
-    stmt.run([user.username, user.email, user.password, user.createdAt], function (error) {
-      if (error) {
-        res.send(error);
-        return;
-      }
-
-      req.flash('success', 'Пользователь успешно зарегистрирован');
-      res.redirect(app.reverse('user', { id: this.lastID }));
-    });
+    req.flash('success', 'Пользователь успешно зарегистрирован');
+    return res.redirect(app.reverse('user', { id }));
   });
 
-  app.get('/users/:id/edit', (req, res) => {
-    db.get(`SELECT * FROM users WHERE id = ${req.params.id}`, (error, user) => {
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
+  app.get('/users/:id/edit', async (req, res) => {
+    const [user] = await sql`SELECT * FROM users WHERE id = ${req.params.id}`;
 
-      return res.view('/users/edit', { id: user.id, username: user.username, email: user.email });
-    });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    return res.view('/users/edit', { id: user.id, username: user.username, email: user.email });
   });
 
   app.patch('/users/:id', {
@@ -127,44 +113,31 @@ export default (app, db) => {
         return { error };
       }
     },
-  }, (req, res) => {
+  }, async (req, res) => {
     const { id } = req.params;
     const { username, email } = req.body;
 
-    const stmt = db.prepare('UPDATE users SET username = ?, email = ? WHERE id = ?');
-    stmt.run([username, email, id], (error) => {
-      if (error) {
-        res.send(error);
-        return;
-      }
+    if (req.validationError) {
+      const data = {
+        id,
+        username,
+        email,
+        error: req.validationError,
+      };
 
-      if (req.validationError) {
-        const data = {
-          id,
-          username,
-          email,
-          error: req.validationError,
-        };
+      return res.view('/users/edit', data);
+    }
 
-        res.view('/users/edit', data);
-        return;
-      }
+    await sql`UPDATE users SET username = ${username}, email = ${email} WHERE id = ${id}`;
 
-      req.flash('success', 'Данные успешно обновлены');
-      res.redirect('/users');
-    });
+    req.flash('success', 'Данные успешно обновлены');
+    return res.redirect('/users');
   });
 
-  app.delete('/users/:id', (req, res) => {
-    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
-    stmt.run(req.params.id, (error) => {
-      if (error) {
-        res.send(error);
-        return;
-      }
+  app.delete('/users/:id', async (req, res) => {
+    await sql`DELETE FROM users WHERE id = ${req.params.id}`;
 
-      req.flash('success', 'Пользователь успешно удален');
-      res.redirect('/users');
-    });
+    req.flash('success', 'Пользователь успешно удален');
+    return res.redirect('/users');
   });
 };

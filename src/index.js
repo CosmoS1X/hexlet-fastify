@@ -9,16 +9,11 @@ import morgan from 'morgan';
 import session from '@fastify/session';
 import cookie from '@fastify/cookie';
 import flash from '@fastify/flash';
-import sqlite3 from 'sqlite3';
 import addRoutes from './routes/index.js';
-import prepareDatabase from './dbInit.js';
 
 export default async () => {
   const wrappedFastify = wrapFastify(fastify);
   const app = wrappedFastify({ exposeHeadRoutes: false });
-  const db = new sqlite3.Database(':memory:');
-
-  prepareDatabase(db);
 
   await app.register(fastifyReverseRoutes);
   await app.register(formbody);
@@ -48,8 +43,8 @@ export default async () => {
     console.log('Application is ready');
   });
 
-  app.addHook('onError', (error) => {
-    console.error('Error during hook execution:', error.message);
+  app.addHook('onError', () => {
+    console.error('Error during hook execution');
   });
 
   app.addHook('onRequest', (req, res, done) => {
@@ -57,7 +52,7 @@ export default async () => {
     done();
   });
 
-  addRoutes(app, db);
+  addRoutes(app);
 
   return app;
 };
